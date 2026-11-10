@@ -39,6 +39,8 @@ class H(BaseHTTPRequestHandler):
             if self.path == "/log":
                 sheets.log(body.get("stage", "n8n"), body.get("message", ""), "error")
                 return self._send(200, {"ok": True})
+        except (BrokenPipeError, ConnectionResetError):
+            pass  # 호출한 쪽이 응답 전에 끊음 (기록은 이미 끝남)
         except feed.Blocked as e:
             sheets.log("collect", str(e), "error")
             return self._send(503, {"error": str(e), "blocked": True})
