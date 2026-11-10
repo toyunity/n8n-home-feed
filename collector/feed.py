@@ -1,21 +1,42 @@
-"""홈판 수집·저장·점수 계산. 표준 라이브러리 + Playwright만 사용."""
+"""네이버 모바일 홈판 수집·저장·점수 계산.
+
+주제마다 홈판의 '주제판'(경제, 건강 등)을 열어 노출된 게시물을 읽는다.
+주제판이 없는 주제(예: 육아)는 여러 판을 묶어 읽고 제목 키워드로 걸러 낸다. HOME = 추천 홈피드.
+"""
 import json, sqlite3, time, datetime as dt
 from pathlib import Path
 
 DB = Path(__file__).parent / "data" / "feed.db"
 SAMPLE = Path(__file__).parent / "sample"
 
-# 브라우저 안에서 피드 카드를 읽는 스크립트. 화면 구조가 바뀌면 여기만 고치면 된다.
-EXTRACT_JS = """() => [...document.querySelectorAll('.chf_feed_card')].map((c, i) => {
+# 추천 홈피드 카드. 좋아요·댓글 수가 화면에 있다.
+HOME_JS = """() => [...document.querySelectorAll('.chf_feed_card')].map(c => {
   const like = c.querySelector('.chf_btn_like');
   let p = {}; try { p = JSON.parse(like?.dataset.nlogParams || '{}') } catch (e) {}
   const nums = (c.querySelector('.chf_feed_activity')?.innerText || '').match(/\\d[\\d,]*/g) || [];
   const link = c.querySelector('.chf_feed_info a, a.chf_link_thumb');
-  return { id: p.content_id, service: p.wvb_service, rank: i + 1,
+  return { id: p.content_id, service: p.wvb_service,
     author: c.querySelector('.chf_name')?.innerText?.trim(),
     title: c.querySelector('.chf_feed_info')?.innerText?.trim() || '',
     url: link?.href, likes: +(nums[0] || '0').replace(/,/g, ''), comments: +(nums[1] || '0').replace(/,/g, '') }
 }).filter(x => x.id)"""
+
+# 주제판 카드. 제목·작성자·링크는 있지만 좋아요·댓글 수는 화면에 없다.
+PANEL_JS = """(code) => {
+  const root = document.querySelector(`[data-panel-code="${code}"]`);
+  if (!root) return [];
+  const seen = new Set(), out = [];
+  for (const e of root.querySelectorAll('[data-nlog-params*="content_id"]')) {
+    if (e.closest('[id*="AdSlot"],[id*="AdTemplate"]')) continue;          // 광고 제외
+    const title = e.querySelector('[class*="_text_title"]')?.textContent?.trim();
+    let p = {}; try { p = JSON.parse(e.dataset.nlogParams) } catch (x) {}
+    if (!title || !p.content_id || seen.has(p.content_id)) continue;
+    seen.add(p.content_id);
+    out.push({ id: p.content_id, service: p.wvb_service || p.feers_item_type, title,
+      author: e.querySelector('[class*="channel_name"]')?.textContent?.trim(),
+      url: e.querySelector('a')?.href, likes: null, comments: null });
+  }
+  return out }"""
 
 
 class Blocked(Exception):
@@ -25,24 +46,21 @@ class Blocked(Exception):
 def db():
     DB.parent.mkdir(exist_ok=True)
     con = sqlite3.connect(DB)
-    con.execute("""create table if not exists snap(day text, id text, service text, rank int, author text,
-                   title text, url text, likes int, comments int, topic text, primary key(day, id))""")
-    con.execute("create table if not exists log(at text, level text, message text)")
+    con.execute("""create table if not exists snap(day text, topic text, id text, service text, rank int, author text,
+                   title text, url text, likes int, comments int, primary key(day, topic, id))""")
     return con
 
 
-def topic_of(title, keywords):
-    """keywords = {"주제": ["키워드", ...]} → 제목에 처음 걸리는 주제, 없으면 '기타'."""
-    for topic, words in keywords.items():
-        if any(w in title for w in words):
-            return topic
-    return "기타"
+def matches(title, keywords):
+    """키워드가 비어 있으면 전부 통과, 있으면 제목에 하나라도 들어간 글만."""
+    return not keywords or any(k in (title or "") for k in keywords)
 
 
-def collect_live(scrolls=4, delay_ms=1500, retries=2):
-    """비로그인 모바일 홈에서 피드를 읽는다. 요청 간격·재시도 상한·차단 감지 포함."""
+def collect_live(topics, scrolls=3, delay_ms=1500, retries=2):
+    """topics = [{"topic": "재테크", "code": "DATA", "keywords": []},
+                 {"topic": "육아", "code": "LIVINGHOME,LECTURE,LIVING", "keywords": ["육아", ...]}]
+    비로그인 새 브라우저로 주제판을 차례로 열어 읽는다. 요청 간격·재시도 상한·차단 감지 포함."""
     from playwright.sync_api import sync_playwright
-    last = None
     for attempt in range(retries + 1):
         try:
             with sync_playwright() as p:
@@ -52,42 +70,63 @@ def collect_live(scrolls=4, delay_ms=1500, retries=2):
                 res = pg.goto("https://m.naver.com/", wait_until="networkidle", timeout=30000)
                 if res is None or res.status in (403, 429) or "captcha" in pg.url.lower():
                     raise Blocked(f"차단 의심: status={res and res.status} url={pg.url}")
-                for _ in range(scrolls):
-                    pg.mouse.wheel(0, 3000)
-                    pg.wait_for_timeout(delay_ms)
-                items = pg.evaluate(EXTRACT_JS)
+                result = {}
+                for t in topics:
+                    items, seen = [], set()
+                    for code in [c.strip() for c in t["code"].split(",") if c.strip()]:  # 판 코드는 여러 개 가능
+                        if code == "HOME":
+                            pg.evaluate("() => document.querySelector(`.nav_item[data-code='SEARCH'] a`)?.click()")
+                        else:  # 상단 주제 탭을 눌러 해당 판을 연다
+                            pg.evaluate("(c) => document.querySelector(`.nav_item[data-code='${c}'] a`).click()", code)
+                        pg.wait_for_timeout(delay_ms * 2)
+                        for _ in range(scrolls):
+                            pg.mouse.wheel(0, 2500)
+                            pg.wait_for_timeout(delay_ms)
+                        raw = pg.evaluate(HOME_JS) if code == "HOME" else pg.evaluate(PANEL_JS, code)
+                        for x in raw:
+                            if x["id"] not in seen and matches(x.get("title"), t.get("keywords")):
+                                seen.add(x["id"])
+                                items.append(x)
+                    for i, x in enumerate(items, 1):
+                        x["rank"] = i  # 주제 안에서 위에서부터의 노출 순서
+                    result[t["topic"]] = items
                 b.close()
-                return items
+                return result
         except Blocked:
             raise  # 차단이면 재시도하지 않고 바로 멈춘다
-        except Exception as e:
-            last = e
+        except Exception:
+            if attempt == retries:
+                raise
             time.sleep(5 * (attempt + 1))
-    raise last
 
 
-def save(con, day, items, keywords):
+def save(con, day, topic, items):
     for it in items:
         con.execute("insert or replace into snap values (?,?,?,?,?,?,?,?,?,?)",
-                    (day, it["id"], it.get("service"), it["rank"], it.get("author"), it.get("title", ""),
-                     it.get("url"), it.get("likes", 0), it.get("comments", 0), topic_of(it.get("title", ""), keywords)))
+                    (day, topic, it["id"], it.get("service"), it["rank"], it.get("author"), it.get("title", ""),
+                     it.get("url"), it.get("likes"), it.get("comments")))
     con.commit()
 
 
-def load_sample(con, keywords):
-    """샘플 모드: sample/*.json(가상 데이터)을 날짜별 스냅샷으로 넣는다."""
-    n = 0
+def load_sample(con, topics):
+    """샘플 모드: sample/day*.json(가상 데이터)을 날짜별로 넣는다. 반환: 마지막 날 주제별 건수."""
+    wanted = {t["topic"] for t in topics}
+    counts = {}
     for f in sorted(SAMPLE.glob("day*.json")):
         d = json.loads(f.read_text())
-        save(con, d["day"], d["items"], keywords)
-        n = len(d["items"])
-    return n  # 마지막 날 건수
+        counts = {}
+        for topic, items in d["topics"].items():
+            if topic in wanted:
+                save(con, d["day"], topic, items)
+                counts[topic] = len(items)
+    return counts
 
 
 def score(rows):
     """rows: 한 게시물의 날짜순 스냅샷 [(day, rank, likes, comments), ...]
 
-    점수 = 연속 노출일 × 10 + (31 - 최고 순위, 최소 0) + 반응 증가량(좋아요+댓글) ÷ 10
+    점수 = 연속 노출일 × 10 + (31 - 최고 순위, 최소 0) + 반응 증가량 ÷ 10
+    반응 수(좋아요+댓글)가 없는 주제판 글은 반응 증가량을 0으로 본다.
     """
     days = [dt.date.fromisoformat(r[0]) for r in rows]
     streak = 1
@@ -96,20 +135,26 @@ def score(rows):
             break
         streak += 1
     best = min(r[1] for r in rows)
-    growth = (rows[-1][2] + rows[-1][3]) - (rows[0][2] + rows[0][3])
-    return round(streak * 10 + max(0, 31 - best) + max(0, growth) / 10, 1), streak, best, growth
+    known = [(r[2] or 0) + (r[3] or 0) for r in rows if r[2] is not None]
+    growth = known[-1] - known[0] if len(known) > 1 else None
+    return round(streak * 10 + max(0, 31 - best) + max(0, growth or 0) / 10, 1), streak, best, growth
 
 
-def report(con, limit=20):
+def report(con, per_topic=20):
     latest = con.execute("select max(day) from snap").fetchone()[0]
     out = []
-    for (pid,) in con.execute("select id from snap where day=?", (latest,)).fetchall():
-        rows = con.execute("select day, rank, likes, comments from snap where id=? order by day", (pid,)).fetchall()
-        s, streak, best, growth = score(rows)
-        day, rank, author, title, url, likes, comments, topic, service = con.execute(
-            "select day, rank, author, title, url, likes, comments, topic, service from snap where id=? and day=?",
-            (pid, latest)).fetchone()
-        out.append(dict(day=day, topic=topic, score=s, streak_days=streak, best_rank=best, rank=rank,
-                        growth=growth, likes=likes, comments=comments, service=service,
-                        author=author, title=title, url=url))
-    return sorted(out, key=lambda r: -r["score"])[:limit]
+    for (topic,) in con.execute("select distinct topic from snap where day=?", (latest,)).fetchall():
+        rows_t = []
+        for (pid,) in con.execute("select id from snap where day=? and topic=?", (latest, topic)).fetchall():
+            hist = con.execute("select day, rank, likes, comments from snap where topic=? and id=? order by day",
+                               (topic, pid)).fetchall()
+            s, streak, best, growth = score(hist)
+            rank, author, title, url, likes, comments, service = con.execute(
+                "select rank, author, title, url, likes, comments, service from snap where day=? and topic=? and id=?",
+                (latest, topic, pid)).fetchone()
+            rows_t.append(dict(day=latest, topic=topic, score=s, streak_days=streak, best_rank=best, rank=rank,
+                               growth="" if growth is None else growth, likes="" if likes is None else likes,
+                               comments="" if comments is None else comments, service=service,
+                               author=author, title=title, url=url))
+        out += sorted(rows_t, key=lambda r: -r["score"])[:per_topic]
+    return out

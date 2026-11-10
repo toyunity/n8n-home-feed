@@ -1,6 +1,6 @@
 """n8n이 HTTP Request 노드로 부르는 수집 서버 (표준 라이브러리 http.server).
 
-POST /collect  {"mode": "sample"|"live"}  → 수집·저장, {"count": n}
+POST /collect  {"mode": "sample"|"live"}  → 주제별 수집·저장, {"count": n, "by_topic": {...}, "empty_topics": [...]}
 POST /publish                             → 점수 계산 후 시트(또는 CSV)에 기록, 결과 행 반환
 POST /log      {"stage": "...", "message": "..."} → 오류 기록 (n8n 오류 워크플로가 호출)
 GET  /health
@@ -32,7 +32,7 @@ class H(BaseHTTPRequestHandler):
             if self.path == "/collect":
                 return self._send(200, self.collect(con, body.get("mode", "sample")))
             if self.path == "/publish":
-                rows = feed.report(con, limit=int(body.get("limit", 50)))
+                rows = feed.report(con, per_topic=int(body.get("per_topic", 20)))
                 where = sheets.write_report(rows[0]["day"], rows) if rows else "없음"
                 sheets.log("publish", f"{len(rows)}건 기록 → {where}")
                 return self._send(200, {"count": len(rows), "where": where, "rows": rows})
@@ -50,17 +50,22 @@ class H(BaseHTTPRequestHandler):
         self._send(404, {"error": "not found"})
 
     def collect(self, con, mode):
-        kw = sheets.keywords()
+        topics = sheets.topics()
         if mode == "live":
             if not LIVE_ALLOWED:
                 raise RuntimeError("LIVE_MODE=1 환경 변수가 없어 실제 수집을 하지 않습니다")
-            items = feed.collect_live()
-            feed.save(con, dt.date.today().isoformat(), items, kw)
-            count = len(items)
+            day = dt.date.today().isoformat()
+            by_topic = {}
+            for topic, items in feed.collect_live(topics).items():
+                feed.save(con, day, topic, items)
+                by_topic[topic] = len(items)
         else:
-            count = feed.load_sample(con, kw)
-        sheets.log("collect", f"{mode} 모드 {count}건 수집, 주제 {len(kw)}개")
-        return {"count": count, "mode": mode}
+            by_topic = feed.load_sample(con, topics)
+        # 주제 하나라도 0건이면 화면 구조 변경·차단을 의심한다 (n8n이 실패로 처리)
+        empty = [t["topic"] for t in topics if not by_topic.get(t["topic"])]
+        sheets.log("collect", f"{mode} 모드 " + ", ".join(f"{k} {v}건" for k, v in by_topic.items())
+                   + (f" / 0건: {', '.join(empty)}" if empty else ""), "error" if empty else "info")
+        return {"count": sum(by_topic.values()), "by_topic": by_topic, "empty_topics": empty, "mode": mode}
 
 
 if __name__ == "__main__":

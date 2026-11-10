@@ -1,96 +1,122 @@
 {
  "note": "가상 샘플 데이터입니다. 실제 네이버 게시물이 아닙니다.",
  "day": "2026-11-09",
- "items": [
-  {
-   "id": "s02",
-   "service": "BLOG",
-   "rank": 1,
-   "author": "샘플블로거B",
-   "title": "[샘플] 11월 국내 여행지 추천 다섯 곳",
-   "url": "https://example.com/sample/s02",
-   "likes": 192,
-   "comments": 27
-  },
-  {
-   "id": "s09",
-   "service": "BLOG",
-   "rank": 2,
-   "author": "샘플블로거I",
-   "title": "[샘플] ETF 월배당 구조 쉽게 설명",
-   "url": "https://example.com/sample/s09",
-   "likes": 130,
-   "comments": 10
-  },
-  {
-   "id": "s01",
-   "service": "BLOG",
-   "rank": 3,
-   "author": "샘플블로거A",
-   "title": "[샘플] 성수동 카페 세 곳 비교 후기",
-   "url": "https://example.com/sample/s01",
-   "likes": 219,
-   "comments": 13
-  },
-  {
-   "id": "s12",
-   "service": "BLOG",
-   "rank": 4,
-   "author": "샘플블로거L",
-   "title": "[샘플] 홈카페 원두 고르는 법",
-   "url": "https://example.com/sample/s12",
-   "likes": 77,
-   "comments": 10
-  },
-  {
-   "id": "s08",
-   "service": "BLOG",
-   "rank": 5,
-   "author": "샘플블로거H",
-   "title": "[샘플] 부산 맛집 지도 정리",
-   "url": "https://example.com/sample/s08",
-   "likes": 279,
-   "comments": 32
-  },
-  {
-   "id": "s10",
-   "service": "CLIP",
-   "rank": 6,
-   "author": "샘플크리에이터J",
-   "title": "[샘플] 제주 겨울 여행 코스",
-   "url": "https://example.com/sample/s10",
-   "likes": 136,
-   "comments": 35
-  },
-  {
-   "id": "s03",
-   "service": "CLIP",
-   "rank": 7,
-   "author": "샘플크리에이터C",
-   "title": "[샘플] 10분 만에 만드는 집밥 레시피",
-   "url": "https://example.com/sample/s03",
-   "likes": 153,
-   "comments": 18
-  },
-  {
-   "id": "s11",
-   "service": "BLOG",
-   "rank": 8,
-   "author": "샘플블로거K",
-   "title": "[샘플] 아이폰 배터리 오래 쓰는 설정",
-   "url": "https://example.com/sample/s11",
-   "likes": 126,
-   "comments": 27
-  },
-  {
-   "id": "s05",
-   "service": "BLOG",
-   "rank": 9,
-   "author": "샘플블로거E",
-   "title": "[샘플] 겨울 캠핑 준비물 체크리스트",
-   "url": "https://example.com/sample/s05",
-   "likes": 120,
-   "comments": 23
-  }
- ]
+ "topics": {
+  "재테크": [
+   {
+    "id": "f2",
+    "service": "NEWS",
+    "rank": 1,
+    "author": "샘플언론B",
+    "title": "[샘플] 연말정산 미리 챙길 공제 항목",
+    "url": "https://example.com/sample/f2",
+    "likes": null,
+    "comments": null
+   },
+   {
+    "id": "f5",
+    "service": "BLOG",
+    "rank": 2,
+    "author": "샘플블로거E",
+    "title": "[샘플] 연금저축과 IRP 차이",
+    "url": "https://example.com/sample/f5",
+    "likes": null,
+    "comments": null
+   },
+   {
+    "id": "f1",
+    "service": "BLOG",
+    "rank": 3,
+    "author": "샘플블로거A",
+    "title": "[샘플] 월배당 ETF 세 가지 비교",
+    "url": "https://example.com/sample/f1",
+    "likes": null,
+    "comments": null
+   },
+   {
+    "id": "f6",
+    "service": "BLOG",
+    "rank": 4,
+    "author": "샘플블로거F",
+    "title": "[샘플] 가계부 앱 한 달 사용기",
+    "url": "https://example.com/sample/f6",
+    "likes": null,
+    "comments": null
+   }
+  ],
+  "건강": [
+   {
+    "id": "h2",
+    "service": "BLOG",
+    "rank": 1,
+    "author": "샘플블로거H",
+    "title": "[샘플] 하루 10분 스트레칭 루틴",
+    "url": "https://example.com/sample/h2",
+    "likes": null,
+    "comments": null
+   },
+   {
+    "id": "h4",
+    "service": "BLOG",
+    "rank": 2,
+    "author": "샘플블로거J",
+    "title": "[샘플] 수면의 질 높이는 습관 다섯 가지",
+    "url": "https://example.com/sample/h4",
+    "likes": null,
+    "comments": null
+   },
+   {
+    "id": "h1",
+    "service": "BLOG",
+    "rank": 3,
+    "author": "샘플약사G",
+    "title": "[샘플] 겨울철 비타민D 섭취 요령",
+    "url": "https://example.com/sample/h1",
+    "likes": null,
+    "comments": null
+   },
+   {
+    "id": "h5",
+    "service": "CLIP",
+    "rank": 4,
+    "author": "샘플크리에이터K",
+    "title": "[샘플] 거북목 교정 운동",
+    "url": "https://example.com/sample/h5",
+    "likes": null,
+    "comments": null
+   }
+  ],
+  "육아": [
+   {
+    "id": "k3",
+    "service": "BLOG",
+    "rank": 1,
+    "author": "샘플블로거N",
+    "title": "[샘플] 유아 감기 때 집에서 할 일",
+    "url": "https://example.com/sample/k3",
+    "likes": 216,
+    "comments": 29
+   },
+   {
+    "id": "k1",
+    "service": "BLOG",
+    "rank": 2,
+    "author": "샘플블로거L",
+    "title": "[샘플] 아기 이유식 첫 주 식단",
+    "url": "https://example.com/sample/k1",
+    "likes": 261,
+    "comments": 35
+   },
+   {
+    "id": "k4",
+    "service": "BLOG",
+    "rank": 3,
+    "author": "샘플블로거O",
+    "title": "[샘플] 어린이 실내 놀이 열 가지",
+    "url": "https://example.com/sample/k4",
+    "likes": 133,
+    "comments": 14
+   }
+  ]
+ }
 }

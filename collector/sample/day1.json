@@ -1,86 +1,102 @@
 {
  "note": "가상 샘플 데이터입니다. 실제 네이버 게시물이 아닙니다.",
  "day": "2026-11-07",
- "items": [
-  {
-   "id": "s01",
-   "service": "BLOG",
-   "rank": 1,
-   "author": "샘플블로거A",
-   "title": "[샘플] 성수동 카페 세 곳 비교 후기",
-   "url": "https://example.com/sample/s01",
-   "likes": 63,
-   "comments": 3
-  },
-  {
-   "id": "s02",
-   "service": "BLOG",
-   "rank": 2,
-   "author": "샘플블로거B",
-   "title": "[샘플] 11월 국내 여행지 추천 다섯 곳",
-   "url": "https://example.com/sample/s02",
-   "likes": 113,
-   "comments": 12
-  },
-  {
-   "id": "s03",
-   "service": "CLIP",
-   "rank": 3,
-   "author": "샘플크리에이터C",
-   "title": "[샘플] 10분 만에 만드는 집밥 레시피",
-   "url": "https://example.com/sample/s03",
-   "likes": 25,
-   "comments": 15
-  },
-  {
-   "id": "s04",
-   "service": "BLOG",
-   "rank": 4,
-   "author": "샘플블로거D",
-   "title": "[샘플] 초보 주식 투자 계좌 개설 순서",
-   "url": "https://example.com/sample/s04",
-   "likes": 26,
-   "comments": 9
-  },
-  {
-   "id": "s05",
-   "service": "BLOG",
-   "rank": 5,
-   "author": "샘플블로거E",
-   "title": "[샘플] 겨울 캠핑 준비물 체크리스트",
-   "url": "https://example.com/sample/s05",
-   "likes": 89,
-   "comments": 13
-  },
-  {
-   "id": "s06",
-   "service": "CLIP",
-   "rank": 6,
-   "author": "샘플크리에이터F",
-   "title": "[샘플] 강아지 산책 루틴 브이로그",
-   "url": "https://example.com/sample/s06",
-   "likes": 65,
-   "comments": 6
-  },
-  {
-   "id": "s07",
-   "service": "BLOG",
-   "rank": 7,
-   "author": "샘플블로거G",
-   "title": "[샘플] 노트북 구매 전 확인할 사양",
-   "url": "https://example.com/sample/s07",
-   "likes": 90,
-   "comments": 10
-  },
-  {
-   "id": "s08",
-   "service": "BLOG",
-   "rank": 8,
-   "author": "샘플블로거H",
-   "title": "[샘플] 부산 맛집 지도 정리",
-   "url": "https://example.com/sample/s08",
-   "likes": 113,
-   "comments": 11
-  }
- ]
+ "topics": {
+  "재테크": [
+   {
+    "id": "f1",
+    "service": "BLOG",
+    "rank": 1,
+    "author": "샘플블로거A",
+    "title": "[샘플] 월배당 ETF 세 가지 비교",
+    "url": "https://example.com/sample/f1",
+    "likes": null,
+    "comments": null
+   },
+   {
+    "id": "f2",
+    "service": "NEWS",
+    "rank": 2,
+    "author": "샘플언론B",
+    "title": "[샘플] 연말정산 미리 챙길 공제 항목",
+    "url": "https://example.com/sample/f2",
+    "likes": null,
+    "comments": null
+   },
+   {
+    "id": "f3",
+    "service": "BLOG",
+    "rank": 3,
+    "author": "샘플블로거C",
+    "title": "[샘플] 사회초년생 적금 순서",
+    "url": "https://example.com/sample/f3",
+    "likes": null,
+    "comments": null
+   },
+   {
+    "id": "f4",
+    "service": "CAFE",
+    "rank": 4,
+    "author": "샘플카페D",
+    "title": "[샘플] 청약 가점 계산해 본 후기",
+    "url": "https://example.com/sample/f4",
+    "likes": null,
+    "comments": null
+   }
+  ],
+  "건강": [
+   {
+    "id": "h1",
+    "service": "BLOG",
+    "rank": 1,
+    "author": "샘플약사G",
+    "title": "[샘플] 겨울철 비타민D 섭취 요령",
+    "url": "https://example.com/sample/h1",
+    "likes": null,
+    "comments": null
+   },
+   {
+    "id": "h2",
+    "service": "BLOG",
+    "rank": 2,
+    "author": "샘플블로거H",
+    "title": "[샘플] 하루 10분 스트레칭 루틴",
+    "url": "https://example.com/sample/h2",
+    "likes": null,
+    "comments": null
+   },
+   {
+    "id": "h3",
+    "service": "NEWS",
+    "rank": 3,
+    "author": "샘플언론I",
+    "title": "[샘플] 독감 예방접종 시기 안내",
+    "url": "https://example.com/sample/h3",
+    "likes": null,
+    "comments": null
+   }
+  ],
+  "육아": [
+   {
+    "id": "k1",
+    "service": "BLOG",
+    "rank": 1,
+    "author": "샘플블로거L",
+    "title": "[샘플] 아기 이유식 첫 주 식단",
+    "url": "https://example.com/sample/k1",
+    "likes": 124,
+    "comments": 18
+   },
+   {
+    "id": "k2",
+    "service": "CLIP",
+    "rank": 2,
+    "author": "샘플크리에이터M",
+    "title": "[샘플] 초등 겨울방학 일과표",
+    "url": "https://example.com/sample/k2",
+    "likes": 119,
+    "comments": 12
+   }
+  ]
+ }
 }
