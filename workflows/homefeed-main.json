@@ -1,0 +1,31 @@
+{
+  "id": "homefeedMain0001",
+  "name": "홈판 수집 → 점수 → 시트",
+  "nodes": [
+    {"id": "a1", "name": "매일 08시", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [0, 0],
+     "parameters": {"rule": {"interval": [{"triggerAtHour": 8}]}}},
+    {"id": "a2", "name": "수동 실행", "type": "n8n-nodes-base.manualTrigger", "typeVersion": 1, "position": [0, 200], "parameters": {}},
+    {"id": "a3", "name": "홈판 수집", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [240, 100],
+     "notes": "파이썬 수집기 호출. 모드는 .env 의 COLLECT_MODE (sample|live)",
+     "parameters": {"method": "POST", "url": "http://collector:8000/collect", "sendBody": true, "specifyBody": "json",
+       "jsonBody": "={{ JSON.stringify({ mode: $env.COLLECT_MODE || 'sample' }) }}",
+       "options": {"timeout": 180000}}},
+    {"id": "a4", "name": "0건인가?", "type": "n8n-nodes-base.if", "typeVersion": 2.2, "position": [480, 100],
+     "parameters": {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+       "conditions": [{"id": "c1", "leftValue": "={{ $json.count }}", "rightValue": 0,
+         "operator": {"type": "number", "operation": "equals"}}], "combinator": "and"}, "options": {}}},
+    {"id": "a5", "name": "0건 = 실패 처리", "type": "n8n-nodes-base.stopAndError", "typeVersion": 1, "position": [720, 0],
+     "parameters": {"errorMessage": "홈판 수집 0건: 화면 구조가 바뀌었거나 접속이 막혔을 수 있습니다"}},
+    {"id": "a6", "name": "점수 계산·시트 기록", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [720, 200],
+     "parameters": {"method": "POST", "url": "http://collector:8000/publish", "sendBody": true, "specifyBody": "json",
+       "jsonBody": "{\"limit\": 50}", "options": {}}}
+  ],
+  "connections": {
+    "매일 08시": {"main": [[{"node": "홈판 수집", "type": "main", "index": 0}]]},
+    "수동 실행": {"main": [[{"node": "홈판 수집", "type": "main", "index": 0}]]},
+    "홈판 수집": {"main": [[{"node": "0건인가?", "type": "main", "index": 0}]]},
+    "0건인가?": {"main": [[{"node": "0건 = 실패 처리", "type": "main", "index": 0}], [{"node": "점수 계산·시트 기록", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1", "timezone": "Asia/Seoul", "errorWorkflow": "homefeedError001"},
+  "active": false
+}

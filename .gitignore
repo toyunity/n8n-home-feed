@@ -1,0 +1,4 @@
+collector/data/
+secrets/
+.env
+__pycache__/

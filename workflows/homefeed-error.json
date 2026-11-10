@@ -1,0 +1,15 @@
+{
+  "id": "homefeedError001",
+  "name": "홈판 수집 오류 알림",
+  "nodes": [
+    {"id": "e1", "name": "오류 발생", "type": "n8n-nodes-base.errorTrigger", "typeVersion": 1, "position": [0, 0], "parameters": {}},
+    {"id": "e2", "name": "로그 탭에 기록", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [240, 0],
+     "notes": "슬랙·텔레그램 알림이 필요하면 이 뒤에 노드를 하나 붙이면 됩니다",
+     "parameters": {"method": "POST", "url": "http://collector:8000/log", "sendBody": true, "specifyBody": "json",
+       "jsonBody": "={{ JSON.stringify({ stage: $json.execution.lastNodeExecuted, message: $json.execution.error.message + ' (실행 ' + $json.execution.id + ')' }) }}",
+       "options": {}}}
+  ],
+  "connections": {"오류 발생": {"main": [[{"node": "로그 탭에 기록", "type": "main", "index": 0}]]}},
+  "settings": {"executionOrder": "v1"},
+  "active": false
+}

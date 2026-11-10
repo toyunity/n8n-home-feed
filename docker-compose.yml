@@ -1,0 +1,25 @@
+services:
+  n8n:
+    image: n8nio/n8n:2.46.7
+    ports: ["5678:5678"]
+    environment:
+      - GENERIC_TIMEZONE=Asia/Seoul
+      - TZ=Asia/Seoul
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - COLLECT_MODE=${COLLECT_MODE:-sample}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows:/workflows:ro
+    depends_on: [collector]
+  collector:
+    build: ./collector
+    environment:
+      - LIVE_MODE=${LIVE_MODE:-0}
+      - TZ=Asia/Seoul
+      - GOOGLE_SHEET_ID=${GOOGLE_SHEET_ID:-}
+      - GOOGLE_SERVICE_ACCOUNT_FILE=/app/secrets/service-account.json
+    volumes:
+      - ./collector/data:/app/data
+      - ./secrets:/app/secrets:ro
+volumes:
+  n8n_data:
