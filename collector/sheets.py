@@ -1,7 +1,7 @@
 """구글 시트 입출력. 자격 증명이 없으면 같은 내용을 data/ 폴더의 CSV·로그 파일로 남긴다.
 
 시트 구성
-- 설정: A열 주제, B열 판 코드(DATA·HEALTH·HOME 등), C열 키워드(쉼표 구분, 비우면 전체)  ← 의뢰인이 직접 고치는 곳
+- 설정: A열 주제, B열 판 코드(DATA·HEALTH·HOME 등), C열 키워드(쉼표 구분, 비우면 전체)
 - 결과_YYYY-MM-DD: 그날 점수순 결과 (주제 열 포함)
 - 로그: 실행 시각, 단계, 결과/오류 메시지
 """
@@ -24,12 +24,15 @@ def _book():
     return gspread.service_account(filename=key).open_by_key(sid)
 
 
-def _tab(book, title, cols=13):
+def _tab(book, title, cols=13, header=None):
     import gspread
     try:
         return book.worksheet(title)
     except gspread.WorksheetNotFound:
-        return book.add_worksheet(title, rows=200, cols=cols)
+        ws = book.add_worksheet(title, rows=200, cols=cols)
+        if header:
+            ws.append_row(header)
+        return ws
 
 
 def topics():
@@ -66,7 +69,7 @@ def log(stage, message, level="info"):
     try:
         book = _book()
         if book:
-            _tab(book, "로그", 4).append_row(row)
+            _tab(book, "로그", 4, ["시각", "수준", "단계", "메시지"]).append_row(row)
     except Exception as e:
         with (DATA / "run.log").open("a", encoding="utf-8") as f:
             f.write(f"{row[0]}\terror\tlog\t시트 로그 기록 실패: {e}\n")
